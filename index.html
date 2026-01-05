@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>MPL / PostaPont választó</title>
+
+  <style>
+    html, body { margin:0; padding:0; height:100%; font-family: Arial, sans-serif; }
+    .wrap { padding: 10px; }
+    .row { display:flex; gap:8px; align-items:center; margin-bottom:10px; }
+    input { width: 140px; padding:8px; border:1px solid #ccc; border-radius:8px; }
+    .hint { font-size: 12px; opacity: .75; margin-bottom: 8px; }
+    #postapontvalasztoapi { width: 100%; height: 520px; border-radius: 12px; overflow: hidden; }
+    .selected { margin-top:10px; font-size: 13px; padding: 10px; border:1px solid #eee; border-radius:12px; background:#fafafa; }
+    .selected b { display:block; margin-bottom:6px; }
+  </style>
+
+  <!-- 1) jQuery (a PostaPont doksi szerint szükséges) -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+
+  <!-- 2) Google Maps JS API (IDE tedd a saját key-ed!) -->
+  <!-- Fontos: a key paraméter kötelező a legtöbb projektben -->
+  <script src="https://maps.googleapis.com/maps/api/js?language=hu&region=HU&key=YOUR_GOOGLE_MAPS_API_KEY"></script>
+
+  <!-- 3) PostaPont API script + css -->
+  <script src="https://posta.hu/szolgaltatasok/postoffice/static/script/ppapi/postapont-api.js"></script>
+  <link rel="stylesheet" href="https://posta.hu/szolgaltatasok/postoffice/static/css/ppapi/postapont-api.css" />
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="row">
+      <label for="pp_zip" style="font-size:13px;">Irányítószám:</label>
+      <input id="pp_zip" type="text" inputmode="numeric" placeholder="pl. 1111" />
+      <div class="hint">Tipp: a térképen is kereshetsz cím/település alapján.</div>
+    </div>
+
+    <div id="postapontvalasztoapi"></div>
+
+    <div class="selected" id="selectedBox" style="display:none;">
+      <b>Kiválasztva:</b>
+      <div id="selectedText"></div>
+    </div>
+  </div>
+
+  <script>
+    // ====== Beállítások (szabadon módosítható) ======
+
+    // Összes szűrő megjelenítése:
+    ppapi.showAllFilters = true;
+
+    // Ha inkább csak egyes kategóriákat akarsz:
+    // ppapi.showAllFilters = false;
+    // ppapi.filterVisibility = [
+    //   { groupName: "30_csomagautomata", visible: true },
+    //   { groupName: "10_posta", visible: true },
+    //   { groupName: "20_molkut", visible: true }
+    // ];
+
+    // Ha valamit tiltani akarsz:
+    // ppapi.skipgroups = { "50_coop": true, "60_egyenipartnerek": true };
+
+    // “Hol vagyok?” gomb elrejtése (ha kell):
+    // ppapi.hideMyLocationBtn = true;
+
+    // ====== Inicializálás ======
+
+    // A doksi alapján: zip mező összekötése
+    ppapi.linkZipField('pp_zip');
+
+    // Térkép beillesztése
+    ppapi.insertMap('postapontvalasztoapi');
+
+    // Kiválasztás esemény
+    ppapi.onSelect = function (data) {
+      // A PostaPont API "data" objektuma rengeteg mezőt adhat vissza.
+      // A doksi példája: name, zip, county, address stb.
+
+      var payload = {
+        id: data['id'] || null,
+        group: data['group'] || null,
+        name: data['name'] || null,
+        zip: data['zip'] || null,
+        county: data['county'] || null,
+        city: data['city'] || null,
+        address: data['address'] || null,
+        country: data['country'] || 'HU'
+      };
+
+      // UI visszajelzés a widgetben (nem kötelező)
+      var pretty = [
+        payload.name,
+        payload.zip ? (payload.zip + (payload.city ? (" " + payload.city) : "")) : null,
+        payload.address,
+        payload.group ? ("GROUP: " + payload.group) : null,
+        payload.id ? ("ID: " + payload.id) : null
+      ].filter(Boolean).join(" | ");
+
+      document.getElementById("selectedBox").style.display = "block";
+      document.getElementById("selectedText").textContent = pretty;
+
+      // Üzenet a Wix szülő oldalnak
+      window.parent.postMessage({
+        type: "MPL_POINT_SELECTED",
+        payload: payload
+      }, "*");
+    };
+  </script>
+</body>
+</html>
+
