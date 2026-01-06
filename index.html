@@ -35,13 +35,15 @@
     }
     .selected b { display:block; margin-bottom:6px; }
     .small { font-size: 12px; opacity: .65; margin-top: 6px; }
+
+    :focus { outline: none !important; }
   </style>
 
   <!-- 1) jQuery -->
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
 
-  <!-- 2) Google Maps JS API (a te kulcsoddal) -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyACIS9fLOIYH8I4FOcfb05DSwBnE8YbDgU&language=hu&region=HU"></script>
+  <!-- 2) Google Maps JS API -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_KEY&language=hu&region=HU"></script>
 
   <!-- 3) PostaPont API -->
   <script src="https://posta.hu/szolgaltatasok/postoffice/static/script/ppapi/postapont-api.js"></script>
@@ -67,16 +69,11 @@
 
   <script>
     (function initPostaPont() {
-      // Szűrők (most mind látszik)
       ppapi.showAllFilters = true;
 
-      // Zip mező összekötés
       ppapi.linkZipField('pp_zip');
-
-      // Térkép beszúrás
       ppapi.insertMap('postapontvalasztoapi');
 
-      // Kiválasztás esemény
       ppapi.onSelect = function(data) {
         var payload = {
           id: (data && (data.id || data['id'])) || "",
@@ -88,7 +85,6 @@
           country: (data && (data.country || data['country'])) || "HU"
         };
 
-        // String a Wix-nek, a GLS-es mintád szerint: event.data.data
         var selectedPointText =
           "MPL PostaPont"
           + " | " + (payload.name || "-")
@@ -97,7 +93,6 @@
           + " | ID:" + (payload.id || "-")
           + (payload.group ? (" | GROUP:" + payload.group) : "");
 
-        // UI
         var box = document.getElementById("selectedBox");
         var text = document.getElementById("selectedText");
         if (box && text) {
@@ -105,7 +100,6 @@
           text.textContent = selectedPointText;
         }
 
-        // Üzenet Wix felé (a te cartPage.js kódodhoz igazítva)
         window.parent.postMessage({
           type: "MPL_SELECTED",
           data: selectedPointText
