@@ -23,6 +23,7 @@
       border-radius: 14px;
       overflow: hidden;
       border: 1px solid #eee;
+      visibility: hidden; /* betöltéskor elrejtjük */
     }
     .selected {
       margin-top: 10px;
@@ -35,12 +36,16 @@
     }
     .selected b { display:block; margin-bottom:6px; }
     .small { font-size: 12px; opacity: .65; margin-top: 6px; }
+
+    /* 🔒 FÓKUSZ TILTÁS – vizuálisan és funkcionálisan */
+    :focus { outline: none !important; }
+    iframe { outline: none; }
   </style>
 
   <!-- 1) jQuery -->
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
 
-  <!-- 2) Google Maps JS API (a te kulcsoddal) -->
+  <!-- 2) Google Maps JS API -->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyACIS9fLOIYH8I4FOcfb05DSwBnE8YbDgU&language=hu&region=HU"></script>
 
   <!-- 3) PostaPont API -->
@@ -66,6 +71,25 @@
   </div>
 
   <script>
+    /* --------------------------------------------------
+       🔒 FÓKUSZ BLOKKOLÁSA
+       Megakadályozza, hogy bármely belső elem fókuszt kapjon,
+       ami scroll-ugrást okozna a Wix oldalon.
+    -------------------------------------------------- */
+    document.addEventListener("focusin", function (e) {
+      if (e.target && typeof e.target.blur === "function") {
+        e.target.blur();
+      }
+    });
+
+    window.addEventListener("load", function () {
+      if (document.activeElement && typeof document.activeElement.blur === "function") {
+        document.activeElement.blur();
+      }
+    });
+  </script>
+
+  <script>
     (function initPostaPont() {
       // Szűrők (most mind látszik)
       ppapi.showAllFilters = true;
@@ -75,6 +99,16 @@
 
       // Térkép beszúrás
       ppapi.insertMap('postapontvalasztoapi');
+
+      // Betöltés után jelenjen meg (layout stabilizálás)
+      window.addEventListener("load", function () {
+        setTimeout(function () {
+          var mapEl = document.getElementById("postapontvalasztoapi");
+          if (mapEl) {
+            mapEl.style.visibility = "visible";
+          }
+        }, 300);
+      });
 
       // Kiválasztás esemény
       ppapi.onSelect = function(data) {
@@ -105,7 +139,7 @@
           text.textContent = selectedPointText;
         }
 
-        // Üzenet Wix felé (a te cartPage.js kódodhoz igazítva)
+        // Üzenet Wix felé
         window.parent.postMessage({
           type: "MPL_SELECTED",
           data: selectedPointText
@@ -115,4 +149,3 @@
   </script>
 </body>
 </html>
-
